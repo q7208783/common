@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?> <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="group.zhangcc.login.mapper.AuthorityMapper">
+    <resultMap id="authorities" type="Authority">
+        <id property="authId" column="auth_id"/>
+        <result property="authName" column="auth_name"/>
+    </resultMap>
+
+    <select id="getUserAuthorities" parameterType="String" resultMap="authorities">
+        SELECT A.auth_id,A.auth_name FROM auth_info A
+        LEFT JOIN user_auth_link L ON L.auth_id=A.auth_id
+        LEFT JOIN user_info U ON L.user_id = U.user_id
+        WHERE U.user_name = #{userName}
+    </select>
+
+    <delete id="deleteAllAuthorities" parameterType="int">
+        DELETE FROM user_auth_link WHERE user_id = #{userId}
+    </delete>
+
+    <delete id="deleteAuthority" parameterType="UserAuthority">
+        DELETE FROM user_auth_link WHERE user_id = #{userId} AND auth_id = #{authId}
+    </delete>
+
+    <insert id="addAuthority" parameterType="UserAuthority">
+        INSERT INTO user_auth_link(auth_id,user_id)
+        VALUES (#{authId},#{userId})
+    </insert>
+
+    <select id="isAuthExist" parameterType="UserAuthority" resultType="boolean">
+        SELECT COUNT(*) FROM user_auth_link WHERE user_id = #{userId} AND auth_id = #{authId}
+    </select>
+</mapper>

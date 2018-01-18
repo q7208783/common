@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?> <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="group.zhangcc.login.mapper.UserInfoMapper">
+    <resultMap id="UserMap" type="User">
+        <id property="userId" column="user_id"/>
+        <result property="password" column="user_pwd"/>
+        <result property="userName" column="user_name"/>
+        <result property="phoneNum" column="user_phone_num"/>
+        <result property="email" column="user_mail"/>
+        <result property="createTimeYmdt" column="create_time_ymdt"/>
+        <result property="lastrResetPwYmdt" column="last_reset_pw_time_ymdt"/>
+        <collection property="authorities" ofType="Authority">
+            <id property="authId" column="auth_id"/>
+            <result property="authName" column="auth_name"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="notificationMap" type="NotificationRequest">
+        <id property="userId" column="user_id"/>
+        <result property="email" column="user_mail"/>
+        <result property="phoneNum" column="user_phone_num"/>
+    </resultMap>
+
+    <select id="getUser" parameterType="SearchUserRequest" resultMap="UserMap">
+        SELECT
+        U.user_id,
+        U.user_name,
+        U.user_pwd,
+        U.user_phone_num,
+        U.user_mail,
+        U.create_time_ymdt,
+        U.last_reset_pw_time_ymdt,
+        A.auth_id,
+        A.auth_name
+        FROM user_info U
+        LEFT JOIN user_auth_link L ON L.user_id = U.user_id
+        LEFT JOIN auth_info A ON A.auth_id = L.auth_id
+        <choose>
+            <when test="userName!=null">
+                WHERE U.user_name = #{userName}
+            </when>
+            <when test="userId!=null">
+                WHERE U.user_id = #{userId}
+            </when>
+            <otherwise>
+                WHERE U.user_id = #{userId} AND U.user_name = #{userName}
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="userNameExist" parameterType="String" resultType="boolean">
+        SELECT COUNT(*) FROM user_info WHERE user_name = #{userName}
+    </select>
+
+    <select id="getUserId" parameterType="String" resultType="Integer">
+        SELECT user_id FROM user_info WHERE user_name = #{userName}
+    </select>
+
+    <insert id="createUser" parameterType="User" useGeneratedKeys="true" keyProperty="userId">
+        INSERT INTO user_info(user_name,user_pwd,user_phone_num,user_mail,create_time_ymdt,last_reset_pw_time_ymdt)
+        VALUES (#{userName},#{password},#{phoneNum},#{email},#{createTimeYmdt},#{lastrResetPwYmdt})
+    </insert>
+
+    <delete id="deleteUser" parameterType="String">
+        DELETE FROM user_info WHERE user_name=#{userName}
+    </delete>
+
+    <update id="changePassword" parameterType="ChangePasswordRequest">
+        UPDATE user_info SET user_pwd=#{newPwd},last_reset_pw_time_ymdt=#{lastrResetPwYmdt}
+        WHERE user_pwd=#{oldPwd} AND user_name=#{userName}
+        <if test="userId > 0">
+            AND user_id=#{userId}
+        </if>
+    </update>
+
+    <update id="changeNotification" parameterType="NotificationRequest">
+        UPDATE user_info
+        <trim prefix="set" suffixOverrides=",">
+            <if test="email!=null">
+                user_mail = #{email},
+            </if>
+            <if test="phoneNum!=null">
+                user_phone_num = #{phoneNum},
+            </if>
+        </trim>
+        WHERE user_id = #{userId}
+    </update>
+
+    <select id="getNotificationInfo" parameterType="Integer" resultMap="notificationMap">
+        SELECT user_id,user_mail,user_phone_num FROM user_info WHERE user_id = #{userId}
+    </select>
+</mapper>
