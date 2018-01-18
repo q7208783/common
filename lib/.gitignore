@@ -25,4 +25,4 @@ nbdist/
 
 ### PassWord File ###
 application-pwd.properties
-/java/group/zhangcc/lib/common/constant/PasswordConfig.java
+*/PasswordConfig.java
